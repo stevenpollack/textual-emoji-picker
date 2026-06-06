@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>textual-emoji-picker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3/dist/bundle/asciinema-player.css">
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --fg: #eaeaea;
+            --accent: #7b68ee;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+        .demo-section {
+            margin: 2rem 0;
+        }
+        .demo-section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+        #player {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        .badge-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .badge-row a img { height: 20px; }
+        .install-block {
+            background: #16213e;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 1rem 1.5rem;
+            font-family: "JetBrains Mono", "Fira Code", monospace;
+            font-size: 0.95rem;
+            margin: 1rem 0;
+        }
+        .install-block code { color: #7ee787; }
+        .links {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .links a {
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .links a:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .screenshot-section {
+            margin-top: 2rem;
+        }
+        .screenshot-section img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        .note {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>textual-emoji-picker</h1>
+        <p class="subtitle">A searchable, categorised emoji picker widget for Textual TUI apps.</p>
+
+        <div class="badge-row">
+            <a href="https://pypi.org/project/textual-emoji-picker/">
+                <img alt="PyPI" src="https://img.shields.io/pypi/v/textual-emoji-picker?color=7b68ee">
+            </a>
+            <a href="https://github.com/stevenpollack/textual-emoji-picker">
+                <img alt="GitHub" src="https://img.shields.io/github/stars/stevenpollack/textual-emoji-picker?style=social">
+            </a>
+        </div>
+
+        <div class="install-block">
+            <code>pip install textual-emoji-picker</code>
+        </div>
+
+        <div class="demo-section">
+            <h2>Live Demo</h2>
+            <div id="player"></div>
+            <p class="note">
+                Recorded with <a href="https://asciinema.org" style="color:var(--accent)">asciinema</a>.
+                Use the progress bar to scrub. Click to pause/resume.
+            </p>
+        </div>
+
+        <div class="screenshot-section">
+            <h2>Screenshots</h2>
+            <img src="screenshots/default.svg" alt="EmojiPicker default state">
+        </div>
+
+        <div class="links">
+            <a href="https://github.com/stevenpollack/textual-emoji-picker">GitHub</a>
+            <a href="https://pypi.org/project/textual-emoji-picker/">PyPI</a>
+            <a href="https://github.com/stevenpollack/textual-emoji-picker#usage">Documentation</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/asciinema-player@3/dist/bundle/asciinema-player.min.js"></script>
+    <script>
+        // Only initialize the player if the cast file exists.
+        fetch('demo.cast', { method: 'HEAD' })
+            .then(resp => {
+                if (resp.ok) {
+                    AsciinemaPlayer.create('demo.cast', document.getElementById('player'), {
+                        theme: 'monokai',
+                        cols: 80,
+                        rows: 24,
+                        autoPlay: true,
+                        loop: true,
+                        speed: 1.5,
+                        poster: 'npt:0:3',
+                    });
+                } else {
+                    document.getElementById('player').innerHTML =
+                        '<p style="color:#888;padding:2rem;text-align:center;">' +
+                        'Demo recording not yet available. Run <code>./demo/record.sh</code> to generate it.</p>';
+                }
+            });
+    </script>
+</body>
+</html>
