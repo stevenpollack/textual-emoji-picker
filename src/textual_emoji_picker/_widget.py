@@ -17,7 +17,7 @@ from textual.message import Message
 from textual.reactive import reactive
 from textual.timer import Timer
 from textual.widget import Widget
-from textual.widgets import Button, Input, Label, Select, Tab, Tabs
+from textual.widgets import Button, Input, Tab, Tabs
 
 logger = logging.getLogger(__name__)
 
@@ -165,10 +165,10 @@ class EmojiPicker(Widget):
 
     DEFAULT_CSS = """
     EmojiPicker {
-        width: 52;
+        width: 42;
         height: auto;
-        max-height: 32;
-        padding: 1 2;
+        max-height: 20;
+        padding: 1 1;
         background: $surface;
         border: round $primary;
     }
@@ -178,22 +178,25 @@ class EmojiPicker(Widget):
     }
     EmojiPicker #skin-tone-bar {
         height: 1;
-        width: 1fr;
-        align: right middle;
-        margin-top: 1;
-    }
-    EmojiPicker #skin-tone-bar Label {
         width: auto;
-        height: 1;
-        color: $text-muted;
-        margin-right: 1;
+        align: center middle;
+        margin-bottom: 1;
     }
-    EmojiPicker #skin-tone-bar Select {
-        width: 5;
+    EmojiPicker #skin-tone-bar Button {
+        width: 4;
+        min-width: 4;
         height: 1;
+        padding: 0;
+        border: none;
+        background: transparent;
+        content-align: center middle;
+        text-align: center;
     }
-    EmojiPicker #skin-tone-bar SelectOverlay {
-        width: 5;
+    EmojiPicker #skin-tone-bar Button:hover {
+        background: $accent 20%;
+    }
+    EmojiPicker #skin-tone-bar Button.selected {
+        background: $accent 40%;
     }
     EmojiPicker #category-tabs {
         width: 1fr;
@@ -202,9 +205,8 @@ class EmojiPicker(Widget):
     EmojiPicker #emoji-grid {
         width: 1fr;
         height: auto;
-        max-height: 18;
-        grid-size: 8;
-        grid-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+        max-height: 10;
+        grid-size: 6;
         grid-rows: 2;
         overflow-y: auto;
     }
@@ -423,6 +425,10 @@ class EmojiPicker(Widget):
 
         with Vertical():
             yield Input(id="emoji-search", placeholder="Search emoji…")
+            with Horizontal(id="skin-tone-bar"):
+                for i, (label, modifier) in enumerate(_SKIN_TONE_OPTIONS):
+                    classes = "selected" if modifier == self._skin_modifier else ""
+                    yield Button(label, id=f"skin-tone-{i}", classes=classes)
             # Tabs built at compose time with static Tab children — avoids the
             # async add_tab() path and ensures the first tab is activated on
             # mount via Tabs' own on_mount, which fires TabActivated.
@@ -430,15 +436,6 @@ class EmojiPicker(Widget):
             with Grid(id="emoji-grid"):
                 for cp, _name in initial_emoji:
                     yield Button(_apply_skin_tone(cp, self._skin_modifier))
-            with Horizontal(id="skin-tone-bar"):
-                yield Label("Skin tone:", id="skin-tone-label")
-                yield Select(
-                    _SKIN_TONE_OPTIONS,
-                    value=self._skin_modifier,
-                    allow_blank=False,
-                    id="skin-tone-select",
-                    compact=True,
-                )
 
     def on_mount(self) -> None:
         # Set the initial active group to match what compose() pre-populated.
@@ -483,18 +480,20 @@ class EmojiPicker(Widget):
             0.15, lambda: self._populate_grid(self._emoji_for_display(query, self._active_group))
         )
 
-    def on_select_changed(self, event: Select.Changed) -> None:
-        if event.select.id != "skin-tone-select":
-            return
-        self._skin_modifier = str(event.value) if event.value != Select.BLANK else ""
-        self._save_skin_tone()
-        self._refresh_grid()
-        event.stop()
-
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        # Emoji grid button — the displayed label already has the tone applied,
-        # so post it directly.
-        emoji = str(event.button.label)
+        btn = event.button
+        if btn.id is not None and btn.id.startswith("skin-tone-"):
+            index = int(btn.id.removeprefix("skin-tone-"))
+            _, modifier = _SKIN_TONE_OPTIONS[index]
+            self._skin_modifier = modifier
+            self._save_skin_tone()
+            for swatch in self.query("#skin-tone-bar Button"):
+                swatch.remove_class("selected")
+            btn.add_class("selected")
+            self._refresh_grid()
+            event.stop()
+            return
+        emoji = str(btn.label)
         logger.debug("EmojiPicker: selected %r", emoji)
         self.post_message(EmojiPicker.EmojiSelected(emoji))
 
@@ -504,7 +503,9 @@ class EmojiPicker(Widget):
             _, modifier = _SKIN_TONE_OPTIONS[index]
             self._skin_modifier = modifier
             self._save_skin_tone()
-            self.query_one("#skin-tone-select", Select).value = modifier
+            for swatch in self.query("#skin-tone-bar Button"):
+                swatch.remove_class("selected")
+            self.query_one(f"#skin-tone-{index}", Button).add_class("selected")
             self._refresh_grid()
 
     def action_cancel(self) -> None:

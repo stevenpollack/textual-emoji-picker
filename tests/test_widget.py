@@ -109,8 +109,7 @@ async def test_cancelled_message_on_escape() -> None:
 
 
 async def test_skin_tone_applied() -> None:
-    """Selecting a skin tone via the dropdown applies the modifier live to the grid."""
-    from textual.widgets import Select
+    """Clicking a skin tone radio button applies the modifier live to the grid."""
 
     app = PickerApp(max_emoji_version=14.0)
     async with app.run_test() as pilot:
@@ -124,9 +123,9 @@ async def test_skin_tone_applied() -> None:
         # Wait longer than the 150 ms search debounce.
         await pilot.pause(delay=0.2)
 
-        # Set light skin tone via the Select widget.
-        select = app.query_one("#skin-tone-select", Select)
-        select.value = "\U0001f3fb"
+        # Click the light skin tone swatch.
+        swatch = app.query_one("#skin-tone-1", Button)
+        await pilot.click(swatch)
         await pilot.pause()
 
         # Grid buttons should now show toned emoji.
@@ -143,15 +142,14 @@ async def test_skin_tone_applied() -> None:
 
 async def test_skin_tone_not_applied_to_incapable() -> None:
     """Selecting a skin tone doesn't affect emoji that can't take modifiers."""
-    from textual.widgets import Select
 
     app = PickerApp()
     async with app.run_test() as pilot:
         await pilot.pause()
 
-        # Set the medium skin tone.
-        select = app.query_one("#skin-tone-select", Select)
-        select.value = "\U0001f3fd"
+        # Click the medium skin tone swatch.
+        swatch = app.query_one("#skin-tone-3", Button)
+        await pilot.click(swatch)
         await pilot.pause()
 
         # Find 😀 (grinning face — not skin-tone-capable) in grid.
@@ -191,40 +189,34 @@ async def test_max_emoji_version_filter() -> None:
         assert "🫠" not in labels, "🫠 (E14.0) should be excluded with max_emoji_version=1.0"
 
 
-async def test_skin_tone_select_present() -> None:
-    """The picker must contain a #skin-tone-bar with a Select dropdown."""
-    from textual.containers import Horizontal
-    from textual.widgets import Select
-
+async def test_skin_tone_bar_present() -> None:
+    """The picker must contain a skin tone bar with 6 swatch buttons."""
     app = PickerApp()
     async with app.run_test() as pilot:
         await pilot.pause()
-        bar = app.query_one("#skin-tone-bar", Horizontal)
-        select = bar.query_one(Select)
-        assert select is not None
+        swatches = list(app.query("#skin-tone-bar Button"))
+        assert len(swatches) == 6
 
 
 async def test_skin_tone_persisted(tmp_path: object) -> None:
     """Skin tone selection persists to disk and is restored on next open."""
     from pathlib import Path
 
-    from textual.widgets import Select
-
     persist_file = Path(str(tmp_path)) / "emoji_prefs.json"
 
-    # First session: set a skin tone.
+    # First session: click medium-dark swatch (index 4).
     app = PickerApp(persist_path=persist_file)
     async with app.run_test() as pilot:
         await pilot.pause()
-        select = app.query_one("#skin-tone-select", Select)
-        select.value = "\U0001f3fe"  # medium-dark
+        swatch = app.query_one("#skin-tone-4", Button)
+        await pilot.click(swatch)
         await pilot.pause()
 
     assert persist_file.exists()
 
-    # Second session: the tone should be restored.
+    # Second session: the tone should be restored (swatch 4 has "selected" class).
     app2 = PickerApp(persist_path=persist_file)
     async with app2.run_test() as pilot:
         await pilot.pause()
-        select2 = app2.query_one("#skin-tone-select", Select)
-        assert select2.value == "\U0001f3fe"
+        swatch2 = app2.query_one("#skin-tone-4", Button)
+        assert swatch2.has_class("selected")
